@@ -45,7 +45,7 @@
 
 #include "Board_LED.h"                  // ::Board Support:LED
 
-#define SLAVE_I2C_ADDR       0x52		// Adresse esclave sur 7 bits
+#define SLAVE_I2C	_ADDR       0x00		// Adresse esclave sur 7 bits
 
 #define nunchuk_ID 0xA4 >> 1   //L.A 
 
@@ -73,9 +73,7 @@ extern ARM_DRIVER_I2C Driver_I2C1;
  int accel_z_axis;
  unsigned char z_button;
  unsigned char c_button;
- 
-uint8_t data[6]; // tableau V nunchuk
-
+	
 unsigned char buffer[6];// array to store arduino output //L.A
 int cnt = 0;      //L.A
 
@@ -100,32 +98,39 @@ void Init_I2C1(void){
  //_______________________FIN INIT_______________________//
 
 
-/*void write1byte (void)
+void write1byte (unsigned char composant, unsigned char valeur1, unsigned char valeur2)
 {
-	uint8_t tab_init[2]={0x40,0x00};
-	Driver_I2C1.MasterTransmit(SLAVE_I2C_ADDR, tab_init, 2, false); 
+	uint8_t tab[2];
+	tab[0]=valeur1;
+	tab[1]=valeur2;
+	
+	
+	Driver_I2C1.MasterTransmit(composant, tab, 2, false); 
 	
 	while(Driver_I2C1.GetStatus().busy==1); 
 	
 }
-*/
 
 
 
 
- void read1byte (void)
-{
-	uint8_t tab[1];
-	tab[0]=0x00; // (non-signé) sur 8 bytes 
+unsigned char read1byte (unsigned char composant){
+	unsigned int valeur;
+	unsigned char lecture;
+	uint8_t tab[8]; // (non-signé) sur 8 bytes 
+	tab[0]=valeur;
+	
+
 //Envoyer les données
 	
-	Driver_I2C1.MasterTransmit(SLAVE_I2C_ADDR, tab, 1, false);
+	Driver_I2C1.MasterTransmit(composant, tab, 1, true);
 	while(Driver_I2C1.GetStatus().busy==1);
 
 //Recevoir les données
 	
-	Driver_I2C1.MasterReceive(SLAVE_I2C_ADDR, data, 6, false);
+	Driver_I2C1.MasterReceive(composant, &lecture, 1, false);
 	while(Driver_I2C1.GetStatus().busy==1);
+	return lecture;
 }
 
 
@@ -148,22 +153,9 @@ void setup ()
 
 */
 
-void nunchuck_init(void)
+void nunchuck_init()
 {
-	//write1byte() ; 
-	/*uint8_t tab_init[2]={0x40,0x00};*/
-	uint8_t tab2_init[2]={0xf0,0x55};
-	uint8_t tab3_init[2]={0xfb,0x00};
-	//Driver_I2C1.MasterTransmit(0x52, tab_init, 2, false); 
-	
-/*	while(Driver_I2C1.GetStatus().busy==1); 
-	osDelay(10);*/
-	Driver_I2C1.MasterTransmit(0x52, tab2_init, 2, false); 
-	while(Driver_I2C1.GetStatus().busy==1); 
-	
-	Driver_I2C1.MasterTransmit(0x52, tab3_init, 2, false); 
-	while(Driver_I2C1.GetStatus().busy==1); 
-	
+	write1byte(0x52 , 0x40 , 0x00) ; 
 }
 
 /* 
@@ -181,7 +173,7 @@ void send_zero ()
 // so we read 8 bits, then we have to add
 // on the last 2 bits.
 
-/*
+
 void joystick ()
 {
 	
@@ -233,12 +225,12 @@ void loop ()
  }
  
  
-		read1byte() ; //valeur de base nlevé 0x52
+		read1byte(0x52) ; 
 	// remise à 0 ? 
   //delay (100); // remplacer avec timer / boucle for 
 } 
 
-*/
+
 //_______________________Fin LA _______________________//
 
 
@@ -303,14 +295,12 @@ static void Error_Handler(void);
 int main(void)
 {
 
-	char composant, addX,y; 
-
-	char *ptr ; 
-	
-	int Lecture,x ; 
+	char composant, addX; 
+	int Lecture ; 
 	char ETAT = 0 ; 
-	uint8_t tab[1]={0x00};
-	char vrai_data[6];
+
+	
+	
 	
   /* STM32F4xx HAL library initialization:
        - Configure the Flash prefetch, Flash preread and Buffer caches
@@ -338,8 +328,8 @@ int main(void)
 	LED_Initialize();
 	Init_I2C1() ; 
 	
-	//nunchuck_init();  //L.A
-	//joystick() ; 
+	nunchuck_init();  //L.A
+	joystick() ; 
 
 
   /* Create thread functions that start executing, 
@@ -356,22 +346,15 @@ int main(void)
 
 
 
-	nunchuck_init();
 
-	osDelay(10);
+
+
 
 
 while (1)
-  { //write1byte();
-		 
-		  Driver_I2C1.MasterTransmit(0x52, tab, 1, false); 
-	    while(Driver_I2C1.GetStatus().busy==1); 
-		  osDelay(10);
-	    read1byte();
-			/*for( x=0; x<6 ; x++){		 
-			vrai_data[x]=((char)data[x] ^ 0x17) + 0x17 ;
-			}*/
-
+  {
+		write1byte(0x52 , 0x00 , 0x00) ;
+		read1byte(0x53) ;  
 	/*
 			
 	
@@ -471,15 +454,7 @@ while (1)
 	}
 
 
-	/*
-	char nunchuk_decode_byte (char x)
-{
- x = (x ^ 0x17) + 0x17;
- return x;
-}
-
-
-	*/
+	
 	
 	
 	
